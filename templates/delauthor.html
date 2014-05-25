@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<form  method="post" name="delete_form" id="delete_form">
+    <p>Введите имя автора: <br>
+        <input type="text" name="name" id="name" autocomplete="off">
+    </p>
+    <p>
+        <button type="submit" class="btn btn-danger">Удалить автора</button>
+    </p>
+</form>
+<script type="text/javascript">
+    $('#name').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 1
+            },
+            {
+                displayKey: 'value',
+                source: function (query, process) {
+                    return $.get('/guess', { q: query, type: 'by_author' }, function (data) {
+                        var guesses = [];
+                        $.each(data.result, function(index, value){
+                            guesses.push({value: value})
+                        })
+                        return process(guesses);
+                    });
+                }
+            });
+
+    $("#delete_form").submit(function(){
+        var text = $("#name").val();
+        if(text == "")
+            return false;
+        $.ajax({
+            type: "POST",
+            data:$("#delete_form").serialize(),
+            url: "/delauthor"
+        }).done(function(data){
+            if(data.result == 'ok')
+                alert("Автор был успешно удален");
+            else
+                alert("Данного автора нет в БД");
+        }).fail(function(){
+            alert("Something wrong")
+        });
+        return false;
+    })
+</script>
+{% endblock %}

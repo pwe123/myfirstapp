@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block content %}
+<form  method="post" name="delete_form" id="delete_form">
+    <p>Введите название книги: <br>
+        <input type="text" name="title" id="title" autocomplete="off">
+    </p>
+    <p>
+        <button type="submit" class="btn btn-danger">Удалить книгу</button>
+    </p>
+</form>
+<script type="text/javascript">
+    $('#title').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 1
+            },
+            {
+                displayKey: 'value',
+                source: function (query, process) {
+                    return $.get('/guess', { q: query, type: 'by_title' }, function (data) {
+                        var guesses = [];
+                        $.each(data.result, function(index, value){
+                            guesses.push({value: value})
+                        })
+                        return process(guesses);
+                    });
+                }
+            });
+
+    $("#delete_form").submit(function(){
+        var text = $("#title").val();
+        if(text == "")
+            return false;
+        $.ajax({
+            type: "POST",
+            data:$("#delete_form").serialize(),
+            url: "/delbook"
+        }).done(function(data){
+            if(data.result == 'ok')
+                alert("Книга была успешно удалена");
+            else
+                alert("Данной книги нет в БД");
+        }).fail(function(){
+            alert("Something wrong")
+        });
+        return false;
+    })
+</script>
+{% endblock %}

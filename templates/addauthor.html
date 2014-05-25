@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<form  method="post" action="/addauthor">
+    {{ form.hidden_tag() }}
+    <p>Введите имя автора: <br>
+        {{form.name}}
+    </p>
+    <p>
+        <button type="submit" class="btn btn-success">Добавить автора</button>
+    </p>
+</form>
+{% endblock %}

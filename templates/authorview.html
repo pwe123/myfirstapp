@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+{% block content %}
+
+<h2 id="name">{{author.name}} </h2>
+        {% if g.user.is_authenticated() %}
+<a href="javascript:void(0)" onclick="edit_name({{author.author_id}})">Редактировать</a><br><br>
+        {% endif %}
+<h4>Список книг автора: </h4><br>
+
+<table class="table" id="table">
+    <th>Название книги</th>
+    {% if g.user.is_authenticated() %}
+    <th>Действие</th>
+    {% endif %}
+    {% for bk in books %}
+    <tr id="{{bk.book_id}}">
+        <td>
+            <a href="{{url_for('book', id=bk.book_id)}}">{{bk.title}}</a>
+        </td>
+
+        {% if g.user.is_authenticated() %}
+
+        <td><a href="javascript:void(0)" onclick="del({{author.author_id}}, {{bk.book_id}})">Удалить</a></td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
+        {% if g.user.is_authenticated() %}
+<form class="form" action='' method="POST" name="add_form" onsubmit="return add_book({{author.author_id}})">
+
+    <input type="text" id="book_name" name="book_name" placeholder="Название книги" ><br>
+
+
+
+    <button type="submit" class="btn btn-success">Добавить книгу</button>
+
+
+</form>
+        {% endif %}
+
+<script type="text/javascript">
+    function edit_name(id) {
+        var old = $("#name").text()
+        var edited = prompt("Отредактируйте имя", old)
+        if(edited) {
+            $.ajax({
+                url: "/editname",
+                type: "GET",
+                data: {id: id, newname: edited}
+            })
+            $("#name").text(edited)
+        }
+    }
+
+    function appendItem(author_id, book_id) {
+        var row = $("<tr></tr>");
+        row.attr("id", book_id)
+        var aitem1 = $("<a></a>").text($("#book_name").val());
+        aitem1.attr("href","/book/".concat(book_id));
+        var col1 = $("<td></td>").append(aitem1);
+
+        var aitem2 = $("<a></a>").text("Удалить");
+        aitem2.attr("href", "javascript:void(0)");
+        aitem2.attr("onclick", "del(".concat(author_id).concat(",").concat(book_id).concat(")"));
+        var col2 = $("<td></td>").append(aitem2);
+        row.append(col1, col2);
+
+        $("#table").append(row);
+    }
+    function add_book(id) {
+        $.ajax({
+            url: "/addbktoaut",
+            type: "GET",
+            data: {id: id, title: $("#book_name").val()}
+        }).done(function(result){
+            if(result['result'] == 'ok') {
+                alert("Книга была успешно добавлена в список книг данного автора");
+                appendItem(id, result['id']);
+                return false;
+            }
+
+            if(result['result'] == 'already exist') alert("Данная книга уже в списке книг этого автора");
+
+            if(result['result'] == 'error') {
+                alert("При добавлении произошла ошибка. Такого автора больше не существует")
+                location.replace('/');
+            }
+
+            var conf;
+            if(result['result'] == 'no book') conf = confirm("Данной книги нет в БД. Добавить книгу в БД и в список книг этого автора?")
+            if(conf == true) {
+                $.ajax({
+                    url: "/addbktoaut",
+                    type: "GET",
+                    data: {id: id, title: $("#book_name").val(), force: true}
+                }).done(function(result){
+                    if(result['result'] == 'ok') {
+                        appendItem(id, result['id']);
+                    }
+                    return;
+                })
+            }
+
+        })
+        return false;
+    }
+
+
+
+    function del(author_id, book_id) {
+        $.ajax({
+            url: "/delbkfromaut",
+            type: "POST",
+            data: {author_id: author_id, book_id: book_id}
+        }).done(function(response) {
+            $("#".concat(book_id)).fadeOut(500);
+        }).fail(function(){
+            alert("Something wrong")
+        })
+    }
+
+    $('#book_name').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 1
+            },
+            {
+                displayKey: 'value',
+                source: function (query, process) {
+                    var qtype = $('input:radio[name=search_type]:checked').val()
+                    return $.get('/guess', { q: query, type:'by_title' }, function (data) {
+                        var guesses = [];
+                        $.each(data.result, function(index, value){
+                            guesses.push({value: value})
+                        })
+                        return process(guesses);
+                    });
+                }
+            });
+</script>
+{% endblock %}

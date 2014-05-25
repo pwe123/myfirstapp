@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+
+    {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    <ul>
+    {% for message in messages %}
+        <li>{{ message }} </li>
+    {% endfor %}
+    </ul>
+    {% endif %}
+    {% endwith %}
+
+<form class="modal-form" name="query_text" id="search_form" method="post">
+    <div>
+        <div class="inline">Искать по:</div>
+        <label class="radio inline">
+            <input type="radio" name="search_type" value="by_title" checked="checked">Названию
+        </label>
+        <label class="radio inline">
+            <input type="radio" name="search_type" value="by_author">Автору<br>
+        </label>
+    </div>
+    <input type="text" name="search_query" class="input-xlarge search-query" placeholder="Поиск..." id="search" autocomplete="off">
+    <button type="submit" class="btn" >Поиск</button><br>
+</form>
+<br>
+        <hr>
+<h3>
+    <div id="search_result"></div>
+</h3>
+<script type="text/javascript">
+    $('#search').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 1
+            },
+            {
+                displayKey: 'value',
+                source: function (query, process) {
+                    var qtype = $('input:radio[name=search_type]:checked').val()
+                    return $.get('/guess', { q: query, type:qtype }, function (data) {
+                        var guesses = [];
+                        $.each(data.result, function(index, value){
+                            guesses.push({value: value})
+                        })
+                        return process(guesses);
+                    });
+                }
+            });
+
+    function appendItem(item) {
+        var divItem = $("<div></div>");
+        var aItem = $("<a></a>").text(item.title);
+        aItem.attr("href", "/book/".concat(item.id))
+        divItem.append(aItem)
+        $("#search_result").append(divItem)
+    }
+    $("#search_form").submit(function(){
+
+        $.ajax({
+            type: "POST",
+            data:$("#search_form").serialize(),
+            url: "/"
+        }).done(function(data){
+            $("#search_result").empty();
+            var result = data.result;
+            for(var i = 0; i < result.length; i++) {
+                appendItem(result[i]);
+            }
+        }).fail(function(){
+            alert("Something wrong")
+        });
+        return false;
+    })
+
+</script>
+{% endblock %}

@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Электронная библиотека</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/bootstrap.css') }}"  type="text/css"/>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/typeaheadjs.css') }}" type="text/css">
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/1.10.1/jquery.min.js"></script>
+    <script src="{{ url_for('static', filename='js/bootstrap.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/typeahead.bundle.js') }}"></script>
+
+</head>
+<body>
+<div class="navbar">
+    <div class="navbar-inner">
+        <div class="container">
+            <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+                <span class="icon-bar"></span>
+            </button>
+            <a class="brand" href="{{ url_for('index') }}">Электронная библиотека</a>
+            <div class="nav-collapse collapse">
+                <ul class="nav">
+                    <li class="active"><a href="{{ url_for('index') }}">Главная</a></li>
+                </ul>
+
+                <form class="navbar-form pull-right" action="{{url_for('signin')}}" method="POST">
+                    <input class="span2" type="text" placeholder="Имя" name="username">
+                    <input class="span2" type="password" placeholder="Пароль" name="password">
+                    <button type="submit" class="btn">Войти</button>
+                    <input  class="btn" value="Зарегестрироваться" onclick="location.href='{{url_for('signup')}}'"></button>
+                </form>
+            </div><!--/.nav-collapse -->
+
+        </div>
+    </div>
+</div>
+<div class="row">
+    <div class="span3">
+        <ul class="nav nav-list">
+            <li class="nav-header">Вы можете:</li>
+            {% if g.user.is_authenticated()%}
+            <li><a href="{{url_for('add_book') }}">Добавить книгу</a></li>
+            <li><a href="{{url_for('add_author') }}">Добавить автора</a></li>
+            <li><a href="{{url_for('delbook') }}">Удалить книгу</a></li>
+            <li><a href="{{url_for('delauthor') }}">Удалить автора</a></li>
+            {% endif %}
+        </ul>
+    </div>
+    <div class="span9">
+        {% block content %}
+        {% endblock %}
+    </div>
+</div>
+<hr>
+<div class="footer">
+    <p>&copy; 2014</p>
+</div>
+
+
+</body>
+</html>

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+{% block content %}
+<h2 id="title">{{book.title}}</h2>
+        {% if g.user.is_authenticated() %}
+<a href="javascript:void(0)" onclick="edit_title({{book.book_id}})">Редактировать</a><br><br>
+        {% endif %}
+<h4>Список авторов книги: </h4><br>
+
+<table class="table" id="table">
+    <th>Имя автора</th>
+    {% if g.user.is_authenticated() %}
+    <th>Действие</th>
+    {% endif %}
+    {% for aut in authors %}
+    <tr id="{{aut.author_id}}">
+        <td>
+            <a href="{{url_for('author', id=aut.author_id)}}">{{aut.name}}</a>
+        </td>
+        {% if g.user.is_authenticated() %}
+        <td><a href="javascript:void(0)" onclick="del({{aut.author_id}}, {{book.book_id}})">Удалить</a></td>
+        {% endif %}
+    </tr>
+    {% endfor %}
+</table>
+        {% if g.user.is_authenticated %}
+        <form class="form" action='' method="POST" name="add_form" onsubmit="return add_author({{book.book_id}})">
+
+    <input type="text" id="author_name" name="author_name" placeholder="Имя автора" ><br>
+
+
+
+    <button type="submit" class="btn btn-success">Добавить автора</button>
+
+
+</form>
+{% endif %}
+
+<script type="text/javascript">
+    function edit_title(id) {
+        var old = $("#title").text()
+        var edited = prompt("Отредактируйте название", old)
+
+        $.ajax({
+            url: "/edittitle",
+            type: "GET",
+            data: {id: id, newtitle: edited}
+        })
+        $("#title").text(edited)
+    }
+
+
+    //
+    function appendItem(author_id, book_id) {
+        /*
+         var divitem = $("<div></div>")
+         var aitem = $("<a></a>").text($("#book_name").val())
+         aitem.attr("href","/book/".concat(id))
+         divitem.append(aitem)
+         $("#books").append(divitem)
+         */
+
+        var row = $("<tr></tr>");
+        row.attr("id", author_id)
+        var aitem1 = $("<a></a>").text($("#author_name").val());
+        aitem1.attr("href","/author/".concat(author_id));
+        var col1 = $("<td></td>").append(aitem1);
+
+        var aitem2 = $("<a></a>").text("Удалить");
+        aitem2.attr("href", "javascript:void(0)");
+        aitem2.attr("onclick", "del(".concat(author_id).concat(",").concat(book_id).concat(")"));
+        var col2 = $("<td></td>").append(aitem2);
+        row.append(col1, col2);
+
+        $("#table").append(row);
+    }
+
+    function add_author(id) {
+        $.ajax({
+            url: "/addauttobk",
+            type: "GET",
+            data: {id: id, name: $("#author_name").val()}
+        }).done(function(result){
+            if(result['result'] == 'ok') {
+                alert("Автор был успешно добавлен в список авторов данной книги");
+                appendItem(result['id'], id);
+                return false;
+            }
+
+            if(result['result'] == 'already exist') alert("Данный автор уже в списке авторов этой книги");
+
+            if(result['result'] == 'error') {
+                alert("При добавлении произошла ошибка. Такой книги больше не существует")
+                location.replace('/');
+            }
+
+            var conf;
+            if(result['result'] == 'no author') conf = confirm("Данного автора нет в БД. Добавить автора в БД и в список авторов этой книги?")
+            if(conf == true) {
+                $.ajax({
+                    url: "/addauttobk",
+                    type: "GET",
+                    data: {id: id, name: $("#author_name").val(), force: true}
+                }).done(function(result){
+                    if(result['result'] == 'ok') {
+                        appendItem(result['id'], id);
+                    }
+                    return;
+                })
+            }
+
+        })
+        return false;
+    }
+
+
+    //
+    function del(author_id, book_id) {
+        $.ajax({
+            url: "/delautfrombk",
+            type: "POST",
+            data: {author_id: author_id, book_id: book_id}
+        }).done(function(response) {
+            $("#".concat(author_id)).fadeOut(500);
+        }).fail(function(){
+            alert("Something wrong")
+        })
+    }
+
+
+    //
+    $('#author_name').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 1
+            },
+            {
+                displayKey: 'value',
+                source: function (query, process) {
+                    var qtype = $('input:radio[name=search_type]:checked').val()
+                    return $.get('/guess', { q: query, type:'by_author' }, function (data) {
+                        var guesses = [];
+                        $.each(data.result, function(index, value){
+                            guesses.push({value: value})
+                        })
+                        return process(guesses);
+                    });
+                }
+            });
+</script>
+
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<form  method="post" action="/addbook">
+    {{ form.hidden_tag() }}
+    <p>Введите название книги: <br>
+        {{form.title}}
+    </p>
+    <p>
+        <button type="submit" class="btn btn-success">Добавить книгу</button>
+    </p>
+</form>
+{% endblock %}
