@@ -3,10 +3,10 @@ __author__ = 'alexey'
 from sqlalchemy import *
 from sqlalchemy.orm import *
 from sqlalchemy.ext.declarative import *
-
 Base = declarative_base()
 
 
+#Views------------------------------------------------------------------------
 class Author(Base):
     __tablename__ = 'authors'
     author_id = Column(INTEGER, primary_key=True)
@@ -50,8 +50,10 @@ from flask import *
 from flask import flash, get_flashed_messages
 
 app = Flask(__name__)
-app.secret_key = "7hnjbj8;smncuu"
+app.secret_key = "7hnjbj8;smncuu"#need for csrf protection
 
+
+#Login support-----------------------------------------------------------------------
 from flask.ext.login import *
 from flask.ext.login import login_required, login_user, logout_user, current_user
 
@@ -87,10 +89,10 @@ def load_user(id):
     s.close()
     return user
 
-
+#Forms------------------------------------------------------------------------
 from flask_wtf import Form
-from wtforms import TextField
-from wtforms.validators import Required
+from wtforms import TextField, PasswordField
+from wtforms.validators import Required, equal_to, length, email
 
 
 class AddBookForm(Form):
@@ -101,14 +103,27 @@ class AddAuthorForm(Form):
     name = TextField('name', validators=[Required()])
 
 
+class EditBookForm(Form):
+    title = TextField('title', validators=[Required()])
+
+
+class EditAuthorForm(Form):
+    name = TextField('name', validators=[Required()])
+
+
 class RegistrationForm(Form):
-    username = TextField('username', validators=[Required()])
+    username = TextField('username', validators=[length(min=4, max=25)])
+    email = TextField('email', validators=[email()])
+    password = PasswordField('password', validators=[Required(), equal_to('password_confirm', 'Passwords must be equal')])
+    password_confirm = PasswordField('password_confirm')
 
 
+#Routing----------------------------------------------------------------------------
 @app.route('/', methods=['GET', 'POST'])
 def index():
     if request.method == 'POST':
         s = DBSession()
+        s.query(Book).all()
         if request.form['search_type'] == 'by_title':
             books = s.query(Book).filter(Book.title == request.form["search_query"])
         else:
@@ -195,6 +210,38 @@ def author(id):
     if authors.count > 0:
         return render_template('authorview.html', author=authors[0], books=books)
     return redirect(url_for('index'))
+
+
+@app.route('/editbook', methods=['GET', 'POST'])
+@login_required
+def editbook():
+    form = EditBookForm()
+    if form.validate_on_submit():
+        s=DBSession()
+        book = s.query(Book).filter(Book.title == request.form['title']).first()
+        s.close()
+        if book:
+            return redirect(url_for('book', id=book.book_id))
+        else:
+            flash("Book doesn't exist")
+            return render_template('editbook.html', form=form)
+    return render_template('editbook.html', form = form)
+
+
+@app.route('/editauthor', methods=['GET', 'POST'])
+@login_required
+def editauthor():
+    form = EditAuthorForm()
+    if form.validate_on_submit():
+        s=DBSession()
+        author = s.query(Author).filter(Author.name==request.form['name']).first()
+        s.close()
+        if author:
+            return redirect(url_for('author', id=author.author_id))
+        else:
+            flash("Author doesn't exist")
+            render_template('editauthor.html', form=form)
+    return render_template('editauthor.html', form=form)
 
 
 @app.route('/delbook', methods=['GET', 'POST'])
@@ -347,14 +394,16 @@ def delautfrombk():
 
 @app.route('/signup', methods=['GET', 'POST'])
 def signup():
-    if request.method == 'GET':
-        return render_template('signup.html')
-    user = User(username=request.form['username'], password=request.form['password'])
-    s = DBSession()
-    s.add(user)
-    s.commit()
-    s.close()
-    return redirect(url_for('index'))
+    form = RegistrationForm()
+    if form.validate_on_submit():
+        user = User(username=request.form['username'], password=request.form['password'])
+        s = DBSession()
+        s.add(user)
+        s.commit()
+        s.close()
+        flash('registered')
+        return redirect(url_for('index'))
+    return render_template('signup.html', form=form)
 
 
 @app.route('/signin', methods=['GET', 'POST'])
@@ -367,10 +416,9 @@ def signin():
     registered_user = s.query(User).filter_by(username=username,password=password).first()
     s.close()
     if registered_user is None:
-        flash('Incorrect username or password', 'error')
+        flash('Invalid username or password')
         return redirect(url_for('index'))
     login_user(registered_user)
-    flash('You are welcome!')
     return redirect(url_for('index'))
 
 

@@ -1,0 +1,10 @@
+sqlite3 ellibrary.db
+
+create table users(id integer primary key, username text, password text);
+
+create table books(book_id integer primary key autoincrement, title text);
+
+create table authors(author_id integer primary key autoincrement, name text)
+
+create table aut_bks(id integer primary key autoincrement, author_id integer references authors(author_id) on delete cascade on update cascade, 
+book_id integer references books(book_id) on delete cascade on update cascade);

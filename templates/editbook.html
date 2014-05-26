@@ -1,0 +1,39 @@
+{% extends "base.html" %}
+{% block content %}
+<form  method="post" action="/editbook">
+    {{ form.hidden_tag() }}
+    <p>Введите название книги: <br>
+        {{form.title}}
+    </p>
+    <p>
+        <button type="submit" class="btn btn-info">Редактировать книгу</button>
+    </p>
+</form>
+                {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+            <h4 style="color: red">{{ message }}</h4> <br>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+        <script type="text/javascript">
+
+                $('#title').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 1
+            },
+            {
+                displayKey: 'value',
+                source: function (query, process) {
+                    return $.get('/guess', { q: query, type: 'by_title' }, function (data) {
+                        var guesses = [];
+                        $.each(data.result, function(index, value){
+                            guesses.push({value: value})
+                        })
+                        return process(guesses);
+                    });
+                }
+            });
+        </script>
+{% endblock %}

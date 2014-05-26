@@ -11,7 +11,7 @@
 
 </head>
 <body>
-<div class="navbar">
+<div class="navbar navbar-inverse">
     <div class="navbar-inner">
         <div class="container">
             <button type="button" class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
@@ -24,13 +24,20 @@
                 <ul class="nav">
                     <li class="active"><a href="{{ url_for('index') }}">Главная</a></li>
                 </ul>
-
+                {% if not g.user.is_authenticated() %}
                 <form class="navbar-form pull-right" action="{{url_for('signin')}}" method="POST">
                     <input class="span2" type="text" placeholder="Имя" name="username">
                     <input class="span2" type="password" placeholder="Пароль" name="password">
                     <button type="submit" class="btn">Войти</button>
                     <input  class="btn" value="Зарегестрироваться" onclick="location.href='{{url_for('signup')}}'"></button>
                 </form>
+                {% endif %}
+                {% if g.user.is_authenticated() %}
+                <div class="navbar pull-right" style="color: #ffffff">Вы зашли как {{ g.user.username}} &nbsp;
+                <a href="/signout">Выйти</a>
+                </div>
+
+                {% endif %}
             </div><!--/.nav-collapse -->
 
         </div>
@@ -45,6 +52,8 @@
             <li><a href="{{url_for('add_author') }}">Добавить автора</a></li>
             <li><a href="{{url_for('delbook') }}">Удалить книгу</a></li>
             <li><a href="{{url_for('delauthor') }}">Удалить автора</a></li>
+            <li><a href="{{url_for('editbook') }}">Редактировать книгу</a></li>
+            <li><a href="{{url_for('editauthor') }}">Редактировать автора</a></li>
             {% endif %}
         </ul>
     </div>

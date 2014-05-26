@@ -1,9 +1,9 @@
 {% extends "base.html" %}
 {% block content %}
 <h2 id="title">{{book.title}}</h2>
-        {% if g.user.is_authenticated() %}
+{% if g.user.is_authenticated() %}
 <a href="javascript:void(0)" onclick="edit_title({{book.book_id}})">Редактировать</a><br><br>
-        {% endif %}
+{% endif %}
 <h4>Список авторов книги: </h4><br>
 
 <table class="table" id="table">
@@ -22,8 +22,8 @@
     </tr>
     {% endfor %}
 </table>
-        {% if g.user.is_authenticated %}
-        <form class="form" action='' method="POST" name="add_form" onsubmit="return add_author({{book.book_id}})">
+{% if g.user.is_authenticated() %}
+<form class="form" action='' method="POST" name="add_form" onsubmit="return add_author({{book.book_id}})">
 
     <input type="text" id="author_name" name="author_name" placeholder="Имя автора" ><br>
 
@@ -39,13 +39,14 @@
     function edit_title(id) {
         var old = $("#title").text()
         var edited = prompt("Отредактируйте название", old)
-
-        $.ajax({
-            url: "/edittitle",
-            type: "GET",
-            data: {id: id, newtitle: edited}
-        })
-        $("#title").text(edited)
+        if(edited) {
+            $.ajax({
+                url: "/edittitle",
+                type: "GET",
+                data: {id: id, newtitle: edited}
+            })
+            $("#title").text(edited)
+        }
     }
 
 

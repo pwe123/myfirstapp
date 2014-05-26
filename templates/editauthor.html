@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<form  method="post" action="/editauthor">
+    {{ form.hidden_tag() }}
+    <p>Введите имя автора: <br>
+        {{form.name}}
+    </p>
+    <p>
+        <button type="submit" class="btn btn-info">Редактировать автора</button>
+    </p>
+</form>
+        {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+            <h4 style="color: red">{{ message }}</h4> <br>
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+        <script type="text/javascript">
+
+                $('#name').typeahead({
+                hint: true,
+                highlight: true,
+                minLength: 1
+            },
+            {
+                displayKey: 'value',
+                source: function (query, process) {
+                    return $.get('/guess', { q: query, type: 'by_author' }, function (data) {
+                        var guesses = [];
+                        $.each(data.result, function(index, value){
+                            guesses.push({value: value})
+                        })
+                        return process(guesses);
+                    });
+                }
+            });
+
+        </script>
+{% endblock %}

@@ -1,15 +1,7 @@
 {% extends "base.html" %}
 {% block content %}
 
-    {% with messages = get_flashed_messages() %}
-    {% if messages %}
-    <ul>
-    {% for message in messages %}
-        <li>{{ message }} </li>
-    {% endfor %}
-    </ul>
-    {% endif %}
-    {% endwith %}
+
 
 <form class="modal-form" name="query_text" id="search_form" method="post">
     <div>
@@ -25,7 +17,20 @@
     <button type="submit" class="btn" >Поиск</button><br>
 </form>
 <br>
+        <div id="errors">
         <hr>
+     {% with messages = get_flashed_messages() %}
+    {% if messages %}
+    {% for message in messages %}
+        {% if message=='registered' %}
+            <h3 style="color: green">You are successfully registered</h3> <br>
+        {% else %}
+            <h3 style="color: red">{{ message }}</h3> <br>
+        {% endif %}
+    {% endfor %}
+    {% endif %}
+    {% endwith %}
+            </div>
 <h3>
     <div id="search_result"></div>
 </h3>
@@ -39,7 +44,7 @@
                 displayKey: 'value',
                 source: function (query, process) {
                     var qtype = $('input:radio[name=search_type]:checked').val()
-                    return $.get('/guess', { q: query, type:qtype }, function (data) {
+                    return $.get("{{url_for('guess')}}", { q: query, type:qtype }, function (data) {
                         var guesses = [];
                         $.each(data.result, function(index, value){
                             guesses.push({value: value})
@@ -64,6 +69,7 @@
             url: "/"
         }).done(function(data){
             $("#search_result").empty();
+            $("#errors").empty();
             var result = data.result;
             for(var i = 0; i < result.length; i++) {
                 appendItem(result[i]);
